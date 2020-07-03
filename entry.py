@@ -1,5 +1,5 @@
 class entry:
-	def __init__(e, sequence, length, p_a, p_t, p_c, p_c, p_g, r1, r2, c, gp_a, gp_t, gp_c, gp_g, gr1, gr2, en, output):
+	def __init__(e, sequence, length, p_a, p_t, p_c, p_g, r1, r2, c, gp_a, gp_t, gp_c, gp_g, gr1, gr2, en, output):
 
 		# 'SEQ' feature
 		e.sequence = sequence

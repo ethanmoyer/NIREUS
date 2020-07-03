@@ -1,4 +1,4 @@
-class digested_sequuence:
+class digested_sequence:
 	def __init__(ds, sticky0, sticky1, sequence):
 
 		# Both sticky ends (left and right, respectively) encoded based on sticky stranded alphabet with respect to top sequence.
