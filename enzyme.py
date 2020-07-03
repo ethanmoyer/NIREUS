@@ -1,5 +1,5 @@
 class enzyme:
-	def __init__(e, name, restriction_site, cuts, price, units):
+	def __init__(e, name, restriction_site, cuts, price = None, units = None):
 		# Name of enzyme
 		e.name = name
 
@@ -18,7 +18,8 @@ class enzyme:
 
 	# Returns the price per unit of the enzyme
 	def get_price_per_unit(e):
-		return e.price / e.units
+		if e.price != None and e.units != None:
+			return e.price / e.units
 
 	
 	# Returns either the left (side == 0) or right (side == 1) cut sequence of the restriction enzyme.
