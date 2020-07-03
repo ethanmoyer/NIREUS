@@ -21,5 +21,10 @@ class enzyme:
 		return e.price / e.units
 
 	
-		
+	# Returns either the left (side == 0) or right (side == 1) cut sequence of the restriction enzyme.
+	def get_cut_sequence(side):
+		if side == 0:
+			return e.restriction_site[:e.cuts[0]]
+		elif side == 1:
+			return e.restriction_site[e.cuts[0]:e.cuts[1] + 1]
 

@@ -8,4 +8,3 @@ class digested_sequuence:
 		# Top sequence between two sticky ends
 		ds.sequence = sequence
 
-	
