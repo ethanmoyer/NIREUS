@@ -14,6 +14,8 @@ class enzyme:
 		e.cut_site0 = e.get_cut_sequence(0)
 		e.cut_site1 = e.get_cut_sequence(1)
 
+		e.overlapping_seq = e.get_overlapping_seq()
+
 		# Price and units were obtained using a restriction enzyme database from NEB
 		# Price listed online
 		e.price = price
@@ -33,10 +35,19 @@ class enzyme:
 	# Returns the specified left (side == 0) or right (side == 1) cut site of the enzyme's restriction site with respect to the parent sequence.	
 	def get_cut_sequence(e, side):
 		if side == 0:
-			return e.restriction_site[:e.cut0]
+			return e.restriction_site[:e.cut0 if e.cut0 <= e.cut1 else e.cut1]
 		elif side == 1:
-			return e.restriction_site[e.cut0:e.cut1 + 1]
+			if e.cut0 >= e.cut1:
+				return e.restriction_site[e.cut0:len(e.restriction_site)]
+			else:
+				return e.restriction_site[e.cut1:len(e.restriction_site)]
 
+	# Returns the overlapping body of the sequence. The body is defined as the stretch of the restriction sequence that creates those sticky ends. i.e. AATT in EcoRI's GAATTC 1 5 site.
+	def get_overlapping_seq(e):
+		if e.cut0 <= e.cut1:
+			return e.restriction_site[e.cut0:e.cut1]
+		else:
+			return e.restriction_site[e.cut1:e.cut0]
 
 	# Returns whether the given sequence is equivalent to either the left (side == 0) or right (side == 1) cut site
 	def equal_to_cut_site(e, seq, side):
@@ -51,6 +62,7 @@ class enzyme:
 
 		# Loop through all the characters in the given sequence and cut sequence and return False if there is a single discrepency based on the restriction_alphabet dictionary
 		for i in range(len(seq)):
+
 			if seq[i] not in e.restriction_alphabet[cut[i]]:
 				return False
 

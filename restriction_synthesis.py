@@ -11,7 +11,9 @@ import re
 def clear(): os.system('clear')
 
 # Returns a translated site given certain parameters: 'N#' is translated to 'N' * # and the site can be subscripted with both cuts.
-def translate_site(site):
+
+# ----- Make sure to extend so that cut0 and cut1 fit in the region -----
+def translate_site(site, cut0, cut1):
 	N_region = re.findall('N\d+', site)
 
 	if N_region == []:
@@ -36,7 +38,9 @@ class restriction_synthesis():
 		rs.synthesized_query = []
 		rs.enzyme_list = []
 
-		rs.ligation_alphabet = {'A': 'Z', 'T': 'G', 'C': 'E', 'G': 'B'}
+		# This alphabet is used to traslate between sticky on bottom strand and sticky end on top strand.
+		rs.ligation_alphabet = {'A': 'Q', 'T': 'W', 'C': 'E', 'G': 'R'}
+
 
 	# If there is a match between a subset of a query sequence and the reference seqeuncrs, it returns position of the match on the reference sequence. Otherwisrs, return -1.
 	def find_all_sequence_match(rs, subseq):
@@ -52,8 +56,10 @@ class restriction_synthesis():
 			# Retrieve both cutting sites of the enzymes
 			site0 = enzyme.cut_site0
 			site1 = enzyme.cut_site1
-			# Return an enzyme it can cut the reference sequence at eactly p
-			if enzyme.equal_to_cut_site(rs.reference[p - len(site0) + 1:p + 1], 0) and enzyme.equal_to_cut_site(rs.reference[p + 1: p + len(site1) + 1], 1):
+
+			# Return an enzyme it can cut the reference sequence at eactly p. This means that left restriction site, the right restriction site, and the body of the restriction site all match their relative segments in the reference relative to p.
+			if enzyme.equal_to_cut_site(rs.reference[p - len(site0):p], 0) and rs.reference[p:p + len(enzyme.overlapping_seq)] == enzyme.overlapping_seq and enzyme.equal_to_cut_site(rs.reference[p + len(enzyme.overlapping_seq): p + len(enzyme.overlapping_seq) + len(site1)], 1):
+
 				return enzyme
 
 		# If no such enzymes exist, return None
@@ -64,32 +70,41 @@ class restriction_synthesis():
 	def perform_digest(rs, enzyme0, enzyme1, p0, p1):
 
 		# The right most sites of the digested sequence's two sticky ends
-		z0 = p0 + enzyme0.cut0
-		z1 = p1 + enzyme1.cut1
+		z0 = p0 + len(enzyme0.overlapping_seq)
+		z1 = p1 + len(enzyme1.overlapping_seq)
 
 		# Return a digest sequence object
-		return digested_sequence(rs.reference[p0:z0 + 1], rs.translate_stikcy_end(rs.reference[p1:z1 + 1]), rs.reference[z0:p1 + 1])
+		return digested_sequence(rs.reference[p0:z0], rs.translate_stikcy_end(rs.reference[p1:z1]), rs.reference[z0:p1])
 
 
 	# Returns a sticky end string based on the rs.ligation_alphabet dictionary.
 	def translate_stikcy_end(rs, seq):
 
 		# Loop through all of the nucleotides in the sequence and convert it based on the ligation alphabet described earlier in the code. Return this converted sequence.
+
+		seq_ = []
+
 		for i in range(len(seq)):
-			seq[i] = ligation_alphabet[seq[i]]
-		return seq
+			seq_.append(rs.ligation_alphabet[seq[i]])
+		return ''.join(seq_)
 
 
 	# Given two digested_sequences objects of the query with sticky ends, it returns TRUE if there are at least n consecuative compatiable basepairs between the two sticky ends. Otherwisrs, return false. If subseq0 isn't provided, this means that this is the first round of ligations, which automatically returns True.
 	def is_ligation_match(rs, subseq1, subseq0 = None, n = 1):
-
-		# If there is not a subseq0 provided, then this is the beginning of synthesis, thus return True.
-		if subseq0 == None:
+		# If there is not a subseq0 provided, then this is the beginning of synthesis, thus return True. Also, if both ligation ends are blunt ends, return True.
+		if subseq0 == None or (subseq0 == "" and subseq1 == ""):
 			return True
 
+		# Return false if either one of them are blunt (conditioned that they both aren't) and if the new sticky overhand is shorter than the minimum value, n.
+		if (subseq0 == "" or subseq1 == "") or (len(subseq0) < n):
+			return False
+
+		print(subseq0)
+		print(subseq1)
+		
 		# Loop through all values of n, and check whether there are any mismatches between the two sticky ends, subseq0 and subseq1.
 		for i in range(n):
-			if ~rs.is_sticky_match(subseq0[len(subseq0) - i], subseq1[i]):
+			if not rs.is_sticky_match(subseq0[len(subseq0) - i - 1], subseq1[i]):
 				return False
 
 		# If there are not any mismatches, return true.
@@ -113,14 +128,16 @@ class restriction_synthesis():
 		# Length of synthesized query
 		synthesized_query_len = 0
 
+
 		# Continue while synthesis is true.
 		while (synthesis):
-
 			# Loop through each of the parsing values--this range needs to be explored later.
 			for k in reversed(range(2, 16)):
 
 				# Loop through all of the fragmented overlapping k-mer sequences for each parsing value
 				query_subseq = rs.query[synthesized_query_len:synthesized_query_len + k + 1]
+
+				print('Parsing for:', query_subseq, sep='')
 
 				# Find all position of query_subseq in the reference
 				for p0 in rs.find_all_sequence_match(query_subseq):
@@ -140,11 +157,24 @@ class restriction_synthesis():
 					if enzyme0 == None or enzyme1 == None:
 						continue
 
+					#print(rs.reference[p0 - 5: p0 + len(query_subseq) + 5])
+
+					#print(query_subseq)
+					#print(p0)
+
+					#print("Enzyme0")
+					rs.display_enzyme(enzyme0)
+					#print("Enzyme1")
+					rs.display_enzyme(enzyme1)
+
 					# Make a digested sequence using the two enzymes at exactly p0 and p1
 					digested_seq = rs.perform_digest(enzyme0, enzyme1, p0, p1)
 
+					# Display the results of the flanked digest
+					rs.display_digested_seq(digested_seq)
+
 					# If the previous sticky end and the current sticky end are not compatiable, continue to the next p0
-					if ~rs.is_ligation_match(digested_seq.sticky0, last_sticky_end):
+					if not rs.is_ligation_match(digested_seq.sticky0, last_sticky_end):
 						continue
 
 					# Make the current sticky end the current sticky end
@@ -154,19 +184,40 @@ class restriction_synthesis():
 					rs.synthesized_query.append(query_subseq)
 					rs.enzyme_list.append([enzyme0, enzyme1])
 
-					print('{%s \t %s}'.format(p0, query_subseq))
+					# Displays the positon that query was found in the reference and the query sequence itself
+					print('{p0} \t {query_subseq}'.format(p0 = p0, query_subseq = query_subseq))
 
 					# Store length of rs.synthesized_query
 					synthesized_query_len = len(''.join(rs.synthesized_query))
-
 					# Synthesis is completed if the synthesized query is at least the size of the query
 					if synthesized_query_len >= len(rs.query):
 						print('Synthesis completed')
 						return 0
 
 					break
-				break
+				
 		return 0
+
+
+	# This function displays relevant information about the given enzyme.
+	def display_enzyme(rs, enzyme_):
+		print('----', enzyme_.name, '----', sep='')
+		print('Restriciton site:\t', enzyme_.restriction_site)
+		print('Top cut position:\t', enzyme_.cut0)
+		print('Bottom cut position:\t',enzyme_.cut1)
+		print('Body restriction site:\t', enzyme_.overlapping_seq)
+		print('Left sequence:\t\t', enzyme_.cut_site0)
+		print('Right sequence:\t\t', enzyme_.cut_site1)
+		print()
+
+
+	def display_digested_seq(rs, digested_sequence_):
+		print('----', digested_sequence_.sticky0, digested_sequence_.sequence, digested_sequence_.sticky1, '----', sep='')
+		print('Left stikcy overhang\t:', digested_sequence_.sticky0)
+		print('Body sequence:\t', digested_sequence_.sequence)
+		print('Right stikcy overhang:\t', digested_sequence_.sticky1)
+		print()
+
 
 	# Displays to console the results of the synthesis.
 	def display_synthesis(rs):
@@ -229,7 +280,7 @@ if __name__ == '__main__':
 	enzymes_file_location = 'data/enzymes/enzymes0.csv'
 	with open(enzymes_file_location, newline='') as csvfile:
 		reader = csv.DictReader(csvfile)
-		enzymes = [enzyme(row['name'], translate_site(row['site']), row['cut0'], row['cut1']) for row in reader]
+		enzymes = [enzyme(row['name'], translate_site(row['site'], row['cut0'], row['cut1']), row['cut0'], row['cut1']) for row in reader]
 
 	# Start the synthesis 
 	print('Starting synthesis')
