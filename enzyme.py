@@ -1,20 +1,26 @@
 class enzyme:
-	def __init__(e, name, restriction_site, cut0, cut1, price = None, units = None):
+	def __init__(e, name = 'None', restriction_site = 'X', cut0 = None, cut1 = None, price = None, units = None):
 		# Name of enzyme
 		e.name = name
 
 		# Restriction site of enzyme
 		e.restriction_site = restriction_site
 
-		# The points at which the enzyme cuts the restriction sequence
-		e.cut0 = int(cut0)
-		e.cut1 = int(cut1)
-
-		# The left and right cut sites of the enzyme
-		e.cut_site0 = e.get_cut_sequence(0)
-		e.cut_site1 = e.get_cut_sequence(1)
-
-		e.overlapping_seq = e.get_overlapping_seq()
+		# Store the points at which the enzyme cuts the restriction sequence
+		if cut0 is not None:
+			e.cut0 = int(cut0)
+		if cut1 is not None:
+			e.cut1 = int(cut1)
+			
+		# Store the left and right cut sites of the enzyme
+		if cut0 is not None:
+			e.cut_site0 = e.get_cut_sequence(0)
+		if cut1 is not None:
+			e.cut_site1 = e.get_cut_sequence(1)	
+			
+		# Store body of enzyme
+		if cut0 is not None and cut1 is not None:
+			e.overlapping_seq = e.get_overlapping_seq()
 
 		# Price and units were obtained using a restriction enzyme database from NEB
 		# Price listed online
@@ -35,6 +41,7 @@ class enzyme:
 	# Returns the specified left (side == 0) or right (side == 1) cut site of the enzyme's restriction site with respect to the parent sequence.	
 	def get_cut_sequence(e, side):
 		if side == 0:
+			print()
 			return e.restriction_site[:e.cut0 if e.cut0 <= e.cut1 else e.cut1]
 		elif side == 1:
 			if e.cut0 >= e.cut1:

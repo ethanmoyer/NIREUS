@@ -1,3 +1,4 @@
+# pkill -f python
 import csv
 
 from enzyme import enzyme
@@ -61,6 +62,7 @@ class restriction_synthesis():
 
 
 	# Returns one enzyme object if the reference sequence can be digested at exactly p. Otherwisrs, returns None. This function should be run twice for every subsequence.
+	# Return list of enzymes
 	def is_instance_match(rs, p, ignore_enzymes = []):
 
 		# Loop through each individual enzyme
@@ -96,10 +98,8 @@ class restriction_synthesis():
 	# Returns a sticky end string based on the rs.ligation_alphabet dictionary.
 	def translate_stikcy_end(rs, seq):
 
-		# Loop through all of the nucleotides in the sequence and convert it based on the ligation alphabet described earlier in the code. Return this converted sequence.
-
 		seq_ = []
-
+		# Loop through all of the nucleotides in the sequence and convert it based on the ligation alphabet described earlier in the code. Return this converted sequence.
 		for i in range(len(seq)):
 			seq_.append(rs.ligation_alphabet[seq[i]])
 		return ''.join(seq_)
@@ -144,14 +144,13 @@ class restriction_synthesis():
 		# Length of synthesized query
 		synthesized_query_len = 0
 
-		k_sug = None
-
-		k = 16
-
 		# Continue while synthesis is true.
 		while (synthesis):
+
+			# Do we ever come back to this spot?
+			k = 16
 			# Loop through each of the parsing values--this range needs to be explored later.
-			while k >= 2:
+			while k >= 4:
 
 				ignore_enzymes = []
 
@@ -170,12 +169,14 @@ class restriction_synthesis():
 					# The end position of the match of p0
 					p1 = p0 + len(query_subseq)
 
+					# Return list of enzymes instead of only one... 
 					# Find two enaymes that cut at exactly p0 and p1
 					enzyme0 = rs.is_instance_match(p0, ignore_enzymes = ignore_enzymes)
 					enzyme1 = rs.is_instance_match(p1)
 
 					# If no two enaymes exist for a given query_subseq, continue to the next p0
 					if enzyme0 == None or enzyme1 == None:
+						#print('Continue to next pair if present.')
 						continue
 
 					#print(rs.reference[p0 - 5: p0 + len(query_subseq) + 5])
@@ -199,7 +200,7 @@ class restriction_synthesis():
 						ignore_enzymes.append(enzyme0.name)
 						continue
 
-					# Make the current sticky end the current sticky end
+					# Save the current stick end
 					last_sticky_end = digested_seq.sticky1
 
 					# Used to track the synthesis step by step in the display_synthesis funciton. 
@@ -212,7 +213,7 @@ class restriction_synthesis():
 					ignore_enzymes = []
 
 					# Displays the positon that query was found in the reference and the query sequence itself
-					print('Percentage: {percent} --> {p0} \t {query_subseq}'.format(percent = synthesized_query_len / len(query), p0 = p0, query_subseq = query_subseq))
+					print('Percentage: {percent} --> {p0} \t {query_subseq}'.format(percent = synthesized_query_len / len(query) * 100, p0 = p0, query_subseq = query_subseq))
 					print()
 
 					# Synthesis is completed if the synthesized query is at least the size of the query
@@ -220,16 +221,24 @@ class restriction_synthesis():
 						print('Synthesis completed')
 						return 0
 
+					# Since subsequence was found, reset parsing value to the max
 					k = 16
 
+					# Break out of loop back to beginning of while
 					break
 				else:
+					# If query_subseq is not in the reference, subtract k by 1
 					k -= 1
 
-			rs.synthesized_query.append('X')
-			rs.enzyme_list.append([None, None])
+			# Reset the current sticky end
+			last_sticky_end = None
 
-		return 0
+			# Used to track the synthesis step by step in the display_synthesis funciton. 
+			rs.synthesized_query.append('X')
+			rs.enzyme_list.append([enzyme(), enzyme()])
+
+			# Store length of rs.synthesized_query
+			synthesized_query_len = len(''.join(rs.synthesized_query))
 
 
 	# This function displays relevant information about the given enzyme.
@@ -254,45 +263,32 @@ class restriction_synthesis():
 
 	# Displays to console the results of the synthesis.
 	def display_synthesis(rs):
-
-		# Three arrays to display n lines of 10 subsequences created by flanking with two enzymes
-		synthesized_query_display = []
-		enzyme_display0 = []
-		enzyme_display1 = []
-
-		# Three temporary strings for each ith line of subsequences
 		temp_synthesized_query_display = ''
 		temp_enzyme_display0 = ''
 		temp_enzyme_display1 = ''
 
-		# Loop through all of the objects in in each iteration of digest
+		# Print each of the ith groups of data
 		for i in range(len(rs.synthesized_query)):
 
 			# Append data to temporary variable with a tab as spacing
 			temp_synthesized_query_display += rs.synthesized_query[i] + '\t'
-			temp_enzyme_display0 = rs.enzyme_list[i][0] + '\t'
-			temp_enzyme_display1 = rs.enzyme_list[i][1] + '\t'
+			if len(rs.synthesized_query[i]) < 8:
+				temp_synthesized_query_display += '\t'
+			temp_enzyme_display0 += rs.enzyme_list[i][0].name + '\t\t'
+			temp_enzyme_display1 += rs.enzyme_list[i][1].name + '\t\t'
 
-			# Add string of 10 objects one at a time to the three arrays
-			if (i + 1) % 10 == 0:
-				temp_synthesized_query_display += '\n'
-				temp_enzyme_display0 += '\n'
-				temp_enzyme_display1 += '\n'
-
-				synthesized_query_display.append(temp_synthesized_query_display)
-				enzyme_display0.append(temp_enzyme_display0)
-				enzyme_display1.append(temp_enzyme_display1)
-
+			# Add string of 6 objects one at a time to the three arrays
+			if (i + 1) % 6 == 0 or i == len(rs.synthesized_query) - 1:
+				print(temp_synthesized_query_display)
+				print(temp_enzyme_display0)
+				print(temp_enzyme_display1)
+				print()
 				temp_synthesized_query_display = ''
 				temp_enzyme_display0 = ''
 				temp_enzyme_display1 = ''
-			
-		# Print each of the ith groups of data
-		for i in range(len(synthesized_query_display)):
-			print(synthesized_query_display[i])
-			print(temp_enzyme_display0[i])
-			print(temp_enzyme_display1[i])
-			print()
+
+		accuracy = (1 - rs.synthesized_query.count('X') / len(rs.query)) * 100
+		print('Synthesis accuracy: ', str(round(accuracy, 2)))
 			
 
 if __name__ == '__main__':
@@ -300,13 +296,18 @@ if __name__ == '__main__':
 	print('Loading reference')
 	reference_file_location = 'data/references/reference0.txt'
 	reference = open(reference_file_location).read()
-	re.sub('\n', '', reference)
+	reference = re.sub('\n', '', reference)
+	print('Reference length: ', len(reference), sep = '')
 
 	# Load the query sqeuence
 	print('Loading query')
 	query_file_location = 'data/queries/query0.txt'
 	query = open(query_file_location).read()
-	re.sub('\n', '', query)
+	query = re.sub('\n', '', query)
+	query = query[:50]
+	print('Query length: ', len(query), sep = '')
+
+	print(f'\nReference length to query length ratio:',str(round(len(reference) / len(query), 2)))
 
 	# Load the enzymes
 	print('Loading enzymes')
@@ -314,12 +315,17 @@ if __name__ == '__main__':
 	with open(enzymes_file_location, newline='') as csvfile:
 		reader = csv.DictReader(csvfile)
 		enzymes = [enzyme(row['name'], translate_site(row['site'], int(row['cut0']), int(row['cut1'])), row['cut0'], row['cut1']) for row in reader]
-
+	
 	# Start the synthesis 
 	print('Starting synthesis')
 
 	# Initialize the restriction synthesis object
 	rs = restriction_synthesis(query, reference, enzymes)
 
-	# Perform the synthesis
+	# Perform synthesis
 	rs.perform_synthesis()
+
+	# Display synthesis
+	rs.display_synthesis()
+
+
