@@ -11,16 +11,29 @@ import re
 def clear(): os.system('clear')
 
 # Returns a translated site given certain parameters: 'N#' is translated to 'N' * # and the site can be subscripted with both cuts.
-
-# ----- Make sure to extend so that cut0 and cut1 fit in the region -----
 def translate_site(site, cut0, cut1):
-	N_region = re.findall('N\d+', site)
 
-	if N_region == []:
+	# Find the number(s) following an N
+	number_of_Ns = re.findall('N(\d+)', site)
+
+	# If it doesn't exist, simply return the site.
+	if number_of_Ns == []:
+
+		# Extend the site toward the right side if need be to fit in both of the restriction sites
+		if cut0 > len(site) or cut1 > len(site):
+			site += 'N' * (cut0 - len(site)) if cut0 > cut1 else 'N' * (cut1 - len(site))
+
 		return site
+	
+	# Substitute the 'N#' with 'N' * #
+	site = re.sub('N\d+', 'N' * int(number_of_Ns[0]), site)
 
-	number_of_Ns = int(re.findall('\d+', N_region[0])[0])
-	return re.sub('N\d+', 'N' * number_of_Ns, site)
+	# Extend the site toward the right side if need be to fit in both of the restriction sites
+	if cut0 > len(site) or cut1 > len(site):
+		site += 'N' * (cut0 - len(site)) if cut0 > cut1 else 'N' * (cut1 - len(site))
+
+	return site
+
 
 class restriction_synthesis():
 
@@ -48,10 +61,13 @@ class restriction_synthesis():
 
 
 	# Returns one enzyme object if the reference sequence can be digested at exactly p. Otherwisrs, returns None. This function should be run twice for every subsequence.
-	def is_instance_match(rs, p):
+	def is_instance_match(rs, p, ignore_enzymes = []):
 
 		# Loop through each individual enzyme
 		for enzyme in rs.enzymes:
+
+			if enzyme.name in ignore_enzymes:
+				continue
 
 			# Retrieve both cutting sites of the enzymes
 			site0 = enzyme.cut_site0
@@ -128,11 +144,16 @@ class restriction_synthesis():
 		# Length of synthesized query
 		synthesized_query_len = 0
 
+		k_sug = None
+
+		k = 16
 
 		# Continue while synthesis is true.
 		while (synthesis):
 			# Loop through each of the parsing values--this range needs to be explored later.
-			for k in reversed(range(2, 16)):
+			while k >= 2:
+
+				ignore_enzymes = []
 
 				# Loop through all of the fragmented overlapping k-mer sequences for each parsing value
 				query_subseq = rs.query[synthesized_query_len:synthesized_query_len + k + 1]
@@ -150,7 +171,7 @@ class restriction_synthesis():
 					p1 = p0 + len(query_subseq)
 
 					# Find two enaymes that cut at exactly p0 and p1
-					enzyme0 = rs.is_instance_match(p0)
+					enzyme0 = rs.is_instance_match(p0, ignore_enzymes = ignore_enzymes)
 					enzyme1 = rs.is_instance_match(p1)
 
 					# If no two enaymes exist for a given query_subseq, continue to the next p0
@@ -161,7 +182,7 @@ class restriction_synthesis():
 
 					#print(query_subseq)
 					#print(p0)
-
+					print('--------------------------------------')
 					#print("Enzyme0")
 					rs.display_enzyme(enzyme0)
 					#print("Enzyme1")
@@ -172,9 +193,10 @@ class restriction_synthesis():
 
 					# Display the results of the flanked digest
 					rs.display_digested_seq(digested_seq)
-
+					print('--------------------------------------')
 					# If the previous sticky end and the current sticky end are not compatiable, continue to the next p0
 					if not rs.is_ligation_match(digested_seq.sticky0, last_sticky_end):
+						ignore_enzymes.append(enzyme0.name)
 						continue
 
 					# Make the current sticky end the current sticky end
@@ -184,18 +206,29 @@ class restriction_synthesis():
 					rs.synthesized_query.append(query_subseq)
 					rs.enzyme_list.append([enzyme0, enzyme1])
 
-					# Displays the positon that query was found in the reference and the query sequence itself
-					print('{p0} \t {query_subseq}'.format(p0 = p0, query_subseq = query_subseq))
-
 					# Store length of rs.synthesized_query
 					synthesized_query_len = len(''.join(rs.synthesized_query))
+
+					ignore_enzymes = []
+
+					# Displays the positon that query was found in the reference and the query sequence itself
+					print('Percentage: {percent} --> {p0} \t {query_subseq}'.format(percent = synthesized_query_len / len(query), p0 = p0, query_subseq = query_subseq))
+					print()
+
 					# Synthesis is completed if the synthesized query is at least the size of the query
 					if synthesized_query_len >= len(rs.query):
 						print('Synthesis completed')
 						return 0
 
+					k = 16
+
 					break
-				
+				else:
+					k -= 1
+
+			rs.synthesized_query.append('X')
+			rs.enzyme_list.append([None, None])
+
 		return 0
 
 
@@ -280,7 +313,7 @@ if __name__ == '__main__':
 	enzymes_file_location = 'data/enzymes/enzymes0.csv'
 	with open(enzymes_file_location, newline='') as csvfile:
 		reader = csv.DictReader(csvfile)
-		enzymes = [enzyme(row['name'], translate_site(row['site'], row['cut0'], row['cut1']), row['cut0'], row['cut1']) for row in reader]
+		enzymes = [enzyme(row['name'], translate_site(row['site'], int(row['cut0']), int(row['cut1'])), row['cut0'], row['cut1']) for row in reader]
 
 	# Start the synthesis 
 	print('Starting synthesis')
