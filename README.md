@@ -4,7 +4,7 @@
 
 ### Origins
 
-NIREUS DNA Synthesis originally started as a continuation of my 9th-grade science fair project in 2016. Since then, I have continued to work on the software, reworking and rewriting most of its elements. Now compiled in Python, this project successfully illustrates an iterative restriction enzyme and sticky-end alignment process for synthesizing DNA. 
+NIREUS DNA Synthesis originally started as a continuation of my 9th-grade science fair project in 2016. Since then I have continued to work on the software, reworking and rewriting most of its elements. Now compiled in Python, this project successfully illustrates an iterative restriction enzyme and sticky-end alignment process for synthesizing DNA. 
 
 ### Rational
 
