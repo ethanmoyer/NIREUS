@@ -1,1 +1,1 @@
-# 20200702_restriction_synthesis_python_architecture
+# NIREUS - Novel Iterative Restriction Enzyme digest Utilizing Sticky-end alignment
