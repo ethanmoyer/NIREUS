@@ -179,26 +179,21 @@ class restriction_synthesis():
 						#print('Continue to next pair if present.')
 						continue
 
-					#print(rs.reference[p0 - 5: p0 + len(query_subseq) + 5])
-
-					#print(query_subseq)
-					#print(p0)
-					print('--------------------------------------')
-					#print("Enzyme0")
-					rs.display_enzyme(enzyme0)
-					#print("Enzyme1")
-					rs.display_enzyme(enzyme1)
-
 					# Make a digested sequence using the two enzymes at exactly p0 and p1
 					digested_seq = rs.perform_digest(enzyme0, enzyme1, p0, p1)
 
-					# Display the results of the flanked digest
-					rs.display_digested_seq(digested_seq)
-					print('--------------------------------------')
 					# If the previous sticky end and the current sticky end are not compatiable, continue to the next p0
 					if not rs.is_ligation_match(digested_seq.sticky0, last_sticky_end):
 						ignore_enzymes.append(enzyme0.name)
 						continue
+
+					print('--------------------------------------')
+					rs.display_enzyme(enzyme0)
+					rs.display_enzyme(enzyme1)
+
+					# Display the results of the flanked digest
+					rs.display_digested_seq(digested_seq)
+					print('--------------------------------------')
 
 					# Save the current stick end
 					last_sticky_end = digested_seq.sticky1
@@ -293,15 +288,25 @@ class restriction_synthesis():
 
 if __name__ == '__main__':
 	# Load the reference sequence
-	print('Loading reference')
+	print('Loading reference sequence')
 	reference_file_location = 'data/references/reference0.txt'
+	print(f'Default reference file location: {reference_file_location}')
+	ref_ans = str(input('Would you like to use the default reference file? [yes/no]:'))
+	if ref_ans.lower() == 'no' :
+		reference_file_location = str(input('Please indicate which reference file you would like to use:'))
+
 	reference = open(reference_file_location).read()
 	reference = re.sub('\n', '', reference)
 	print('Reference length: ', len(reference), sep = '')
 
-	# Load the query sqeuence
-	print('Loading query')
+	# Load the query sequence
+	print('Loading query sequence')
 	query_file_location = 'data/queries/query0.txt'
+	print(f'Default query file location: {query_file_location}')
+	query_ans = str(input('Would you like to use the default query file? [yes/no]:'))
+	if query_ans.lower() == 'no' :
+		query_file_location = str(input('Please indicate which query file you would like to use:'))
+
 	query = open(query_file_location).read()
 	query = re.sub('\n', '', query)
 	query = query[:50]
@@ -310,8 +315,13 @@ if __name__ == '__main__':
 	print(f'\nReference length to query length ratio:',str(round(len(reference) / len(query), 2)))
 
 	# Load the enzymes
-	print('Loading enzymes')
+	print('Loading enzyme list')
 	enzymes_file_location = 'data/enzymes/enzymes0.csv'
+	print(f'Default enzyme file location: {enzymes_file_location}')
+	enz_ans = str(input('Would you like to use the default enzyme file? [yes/no]:'))
+	if enz_ans.lower() == 'no' :
+		enzymes_file_location = str(input('Please indicate which enzyme file you would like to use:'))
+
 	with open(enzymes_file_location, newline='') as csvfile:
 		reader = csv.DictReader(csvfile)
 		enzymes = [enzyme(row['name'], translate_site(row['site'], int(row['cut0']), int(row['cut1'])), row['cut0'], row['cut1']) for row in reader]
