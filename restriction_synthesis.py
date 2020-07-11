@@ -8,7 +8,7 @@ from digested_sequence import digested_sequence
 import pandas as pd
 import re
 
-# Simple funciton to clear the console so the synthesis can be visualized
+# Simple function to clear the console so the synthesis can be visualized
 def clear(): os.system('clear')
 
 # Returns a translated site given certain parameters: 'N#' is translated to 'N' * # and the site can be subscripted with both cuts.
@@ -52,16 +52,16 @@ class restriction_synthesis():
 		rs.synthesized_query = []
 		rs.enzyme_list = []
 
-		# This alphabet is used to traslate between sticky on bottom strand and sticky end on top strand.
+		# This alphabet is used to translate between sticky on bottom strand and sticky end on top strand.
 		rs.ligation_alphabet = {'A': 'Q', 'T': 'W', 'C': 'E', 'G': 'R'}
 
 
-	# If there is a match between a subset of a query sequence and the reference seqeuncrs, it returns position of the match on the reference sequence. Otherwisrs, return -1.
+	# If there is a match between a subset of a query sequence and the reference sequence it returns position of the match on the reference sequence. Otherwise, return -1.
 	def find_all_sequence_match(rs, subseq):
 		return [x.start() for x in re.finditer(subseq, rs.reference)]
 
 
-	# Returns one enzyme object if the reference sequence can be digested at exactly p. Otherwisrs, returns None. This function should be run twice for every subsequence.
+	# Returns one enzyme object if the reference sequence can be digested at exactly p. Otherwise, returns None. This function should be run twice for every subsequence.
 	# Return list of enzymes
 	def is_instance_match(rs, p, ignore_enzymes = []):
 
@@ -75,7 +75,7 @@ class restriction_synthesis():
 			site0 = enzyme.cut_site0
 			site1 = enzyme.cut_site1
 
-			# Return an enzyme it can cut the reference sequence at eactly p. This means that left restriction site, the right restriction site, and the body of the restriction site all match their relative segments in the reference relative to p.
+			# Return an enzyme it can cut the reference sequence at exactly p. This means that left restriction site, the right restriction site, and the body of the restriction site all match their relative segments in the reference relative to p.
 			if enzyme.equal_to_cut_site(rs.reference[p - len(site0):p], 0) and rs.reference[p:p + len(enzyme.overlapping_seq)] == enzyme.overlapping_seq and enzyme.equal_to_cut_site(rs.reference[p + len(enzyme.overlapping_seq): p + len(enzyme.overlapping_seq) + len(site1)], 1):
 
 				return enzyme
@@ -105,7 +105,7 @@ class restriction_synthesis():
 		return ''.join(seq_)
 
 
-	# Given two digested_sequences objects of the query with sticky ends, it returns TRUE if there are at least n consecuative compatiable basepairs between the two sticky ends. Otherwisrs, return false. If subseq0 isn't provided, this means that this is the first round of ligations, which automatically returns True.
+	# Given two digested_sequences objects of the query with sticky ends, it returns TRUE if there are at least n consecutive compatible base pairs between the two sticky ends. Otherwise, return false. If subseq0 isn't provided, this means that this is the first round of ligations, which automatically returns True.
 	def is_ligation_match(rs, subseq1, subseq0 = None, n = 1):
 		# If there is not a subseq0 provided, then this is the beginning of synthesis, thus return True. Also, if both ligation ends are blunt ends, return True.
 		if subseq0 == None or (subseq0 == "" and subseq1 == ""):
@@ -127,7 +127,7 @@ class restriction_synthesis():
 		return True
 
 
-	# Returns whether the top nucletoide, s1, can ligate to the bottomn nucleotide, s0.
+	# Returns whether the top nucleotide, s1, can ligate to the bottom nucleotide, s0.
 	def is_sticky_match(rs, s0, s1):
 		return rs.ligation_alphabet[s1] == s0
 
@@ -170,11 +170,11 @@ class restriction_synthesis():
 					p1 = p0 + len(query_subseq)
 
 					# Return list of enzymes instead of only one... 
-					# Find two enaymes that cut at exactly p0 and p1
+					# Find two enzymes that cut at exactly p0 and p1
 					enzyme0 = rs.is_instance_match(p0, ignore_enzymes = ignore_enzymes)
 					enzyme1 = rs.is_instance_match(p1)
 
-					# If no two enaymes exist for a given query_subseq, continue to the next p0
+					# If no two enzymes exist for a given query_subseq, continue to the next p0
 					if enzyme0 == None or enzyme1 == None:
 						#print('Continue to next pair if present.')
 						continue
@@ -182,7 +182,7 @@ class restriction_synthesis():
 					# Make a digested sequence using the two enzymes at exactly p0 and p1
 					digested_seq = rs.perform_digest(enzyme0, enzyme1, p0, p1)
 
-					# If the previous sticky end and the current sticky end are not compatiable, continue to the next p0
+					# If the previous sticky end and the current sticky end are not compatible, continue to the next p0
 					if not rs.is_ligation_match(digested_seq.sticky0, last_sticky_end):
 						ignore_enzymes.append(enzyme0.name)
 						continue
@@ -198,7 +198,7 @@ class restriction_synthesis():
 					# Save the current stick end
 					last_sticky_end = digested_seq.sticky1
 
-					# Used to track the synthesis step by step in the display_synthesis funciton. 
+					# Used to track the synthesis step by step in the display_synthesis function. 
 					rs.synthesized_query.append(query_subseq)
 					rs.enzyme_list.append([enzyme0, enzyme1])
 
@@ -207,7 +207,7 @@ class restriction_synthesis():
 
 					ignore_enzymes = []
 
-					# Displays the positon that query was found in the reference and the query sequence itself
+					# Displays the position that query was found in the reference and the query sequence itself
 					print('Percentage: {percent} --> {p0} \t {query_subseq}'.format(percent = synthesized_query_len / len(query) * 100, p0 = p0, query_subseq = query_subseq))
 					print()
 
@@ -228,7 +228,7 @@ class restriction_synthesis():
 			# Reset the current sticky end
 			last_sticky_end = None
 
-			# Used to track the synthesis step by step in the display_synthesis funciton. 
+			# Used to track the synthesis step by step in the display_synthesis function. 
 			rs.synthesized_query.append('X')
 			rs.enzyme_list.append([enzyme(), enzyme()])
 
@@ -239,7 +239,7 @@ class restriction_synthesis():
 	# This function displays relevant information about the given enzyme.
 	def display_enzyme(rs, enzyme_):
 		print('----', enzyme_.name, '----', sep='')
-		print('Restriciton site:\t', enzyme_.restriction_site)
+		print('Restriction site:\t', enzyme_.restriction_site)
 		print('Top cut position:\t', enzyme_.cut0)
 		print('Bottom cut position:\t',enzyme_.cut1)
 		print('Body restriction site:\t', enzyme_.overlapping_seq)
@@ -250,9 +250,9 @@ class restriction_synthesis():
 
 	def display_digested_seq(rs, digested_sequence_):
 		print('----', digested_sequence_.sticky0, digested_sequence_.sequence, digested_sequence_.sticky1, '----', sep='')
-		print('Left stikcy overhang\t:', digested_sequence_.sticky0)
+		print('Left sticky overhang\t:', digested_sequence_.sticky0)
 		print('Body sequence:\t', digested_sequence_.sequence)
-		print('Right stikcy overhang:\t', digested_sequence_.sticky1)
+		print('Right sticky overhang:\t', digested_sequence_.sticky1)
 		print()
 
 
@@ -287,12 +287,15 @@ class restriction_synthesis():
 			
 
 if __name__ == '__main__':
+
+	# Add conformation for all three different steps
+
 	# Load the reference sequence
 	print('Loading reference sequence')
 	reference_file_location = 'data/references/reference0.txt'
 	print(f'Default reference file location: {reference_file_location}')
 	ref_ans = str(input('Would you like to use the default reference file? [yes/no]:'))
-	if ref_ans.lower() == 'no' :
+	if ref_ans.lower() is 'no' :
 		reference_file_location = str(input('Please indicate which reference file you would like to use:'))
 
 	reference = open(reference_file_location).read()
@@ -304,7 +307,7 @@ if __name__ == '__main__':
 	query_file_location = 'data/queries/query0.txt'
 	print(f'Default query file location: {query_file_location}')
 	query_ans = str(input('Would you like to use the default query file? [yes/no]:'))
-	if query_ans.lower() == 'no' :
+	if query_ans.lower() is 'no' :
 		query_file_location = str(input('Please indicate which query file you would like to use:'))
 
 	query = open(query_file_location).read()
@@ -316,16 +319,28 @@ if __name__ == '__main__':
 
 	# Load the enzymes
 	print('Loading enzyme list')
-	enzymes_file_location = 'data/enzymes/enzymes0.csv'
-	print(f'Default enzyme file location: {enzymes_file_location}')
-	enz_ans = str(input('Would you like to use the default enzyme file? [yes/no]:'))
-	if enz_ans.lower() == 'no' :
-		enzymes_file_location = str(input('Please indicate which enzyme file you would like to use:'))
+	data_ans = str(input('Would you like to use an enzyme file or a database from BioPython? [file/database]:'))
+	if data_ans.lower() is file:	
+		enzymes_file_location = 'data/enzymes/enzymes0.csv'
+		print(f'Default enzyme file location: {enzymes_file_location}')
+		enz_ans = str(input('Would you like to use the default enzyme file? [yes/no]:'))
+		if enz_ans.lower()is 'no' :
+			enzymes_file_location = str(input('Please indicate which enzyme file you would like to use:'))
 
-	with open(enzymes_file_location, newline='') as csvfile:
-		reader = csv.DictReader(csvfile)
-		enzymes = [enzyme(row['name'], translate_site(row['site'], int(row['cut0']), int(row['cut1'])), row['cut0'], row['cut1']) for row in reader]
-	
+		with open(enzymes_file_location, newline='') as csvfile:
+			reader = csv.DictReader(csvfile)
+			enzymes = [enzyme(row['name'], translate_site(row['site'], int(row['cut0']), int(row['cut1'])), row['cut0'], row['cut1']) for row in reader]
+	else:
+		from Bio.Restriction import *
+
+		RestrictionBatch.show_codes()
+
+		comp_ans = str(input('Please select which company/companies that will be used for synthesis. i.e. B,C:'))
+		companies = comp_ans.split(',')
+
+		enzymes = [e for e in RestrictionBatch(first=[],suppliers=companies)]
+
+
 	# Start the synthesis 
 	print('Starting synthesis')
 

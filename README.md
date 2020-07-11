@@ -27,9 +27,9 @@ In addition to a subsequence match and an instance match, a third match is requi
 At this point, NIREUS DNA Synthesis is able to simulate this proposed DNA synthesis method. The following list outlines the next steps for NIREUS DNA Synthesis.
 
 - The last cost analysis was completed almost four years ago, so the price of the method should be heavily inspected and reported.
-- Implement a user-friendly interface through the command prompt. There is already functionality to display certain aspects of the synthesis, but they should be further organized for ease of access afterward.
 - Design and perform tests related to the query-reference length ratio. 
 - Design a final restriction map plot of the reference sequence that indicates what enzymes should be used where in order to get the desired fragments in lab
 - Create a method for determining the order of applying enzymes for the digestion of the reference
 - Implement a pre-built machine learning model for subsequence classification
 - Build and implement a machine learning model for subsequence alignment prediction
+- Implement Biopython implementation
