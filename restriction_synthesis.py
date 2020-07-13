@@ -1,12 +1,16 @@
 # pkill -f python
 import csv
 
-from enzyme import enzyme
+from enzyme import enzyme, csv_enzyme, biopy_enzyme
 from entry import entry
 from digested_sequence import digested_sequence
 
 import pandas as pd
 import re
+
+from Bio.Restriction import *
+from Bio.Seq import Seq
+from Bio.Alphabet.IUPAC import IUPACAmbiguousDNA
 
 # Simple function to clear the console so the synthesis can be visualized
 def clear(): os.system('clear')
@@ -109,7 +113,7 @@ class restriction_synthesis():
 
 
 	# Given two digested_sequences objects of the query with sticky ends, it returns TRUE if there are at least n consecutive compatible base pairs between the two sticky ends. Otherwise, return false. If subseq0 isn't provided, this means that this is the first round of ligations, which automatically returns True.
-	def is_ligation_match(rs, subseq1, subseq0 = None, n = 1):
+	def is_ligation_match(rs, subseq1, subseq0 = None):
 		# If there is not a subseq0 provided, then this is the beginning of synthesis, thus return True. Also, if both ligation ends are blunt ends, return True.
 		if subseq0 == None or (subseq0 == "" and subseq1 == ""):
 			return True
@@ -119,7 +123,7 @@ class restriction_synthesis():
 			return False
 		
 		# Loop through all values of n, and check whether there are any mismatches between the two sticky ends, subseq0 and subseq1.
-		for i in range(n):
+		for i in range(len(subseq1)):
 			if not rs.is_sticky_match(subseq0[len(subseq0) - i - 1], subseq1[i]):
 				return False
 
@@ -164,7 +168,7 @@ class restriction_synthesis():
 		for enzyme_i in enzyme_list:
 			count = 0
 			for enzyme_j in enzymes:
-				if rs.is_ligation_match_biopython(enzyme_i, enzyme_j):
+				if rs.is_ligation_match_biopython(enzyme_i, enzyme_j) and enzyme_i != enzyme_j:
 					count += 1
 			if count > max_count:
 				enzyme_ = enzyme_i
@@ -210,7 +214,6 @@ class restriction_synthesis():
 					# Find two enzymes that cut at exactly p0 and p1
 					enzymes0 = rs.is_instance_match_biopython(p0, ignore_enzymes = ignore_enzymes)
 					enzymes1 = rs.is_instance_match_biopython(p1)
-
 
 					# If no two enzymes exist for a given query_subseq, continue to the next p0
 					if enzymes0 == [] or enzymes1 == []:
@@ -409,10 +412,14 @@ class restriction_synthesis():
 
 			# Append data to temporary variable with a tab as spacing
 			temp_synthesized_query_display += rs.synthesized_query[i] + '\t'
+			temp_enzyme_display0 += rs.enzyme_list[i][0].name + '\t'
+			temp_enzyme_display1 += rs.enzyme_list[i][1].name + '\t'
 			if len(rs.synthesized_query[i]) < 8:
 				temp_synthesized_query_display += '\t'
-			temp_enzyme_display0 += rs.enzyme_list[i][0].name + '\t\t'
-			temp_enzyme_display1 += rs.enzyme_list[i][1].name + '\t\t'
+			if len(rs.enzyme_list[i][0].name) < 8:
+				temp_enzyme_display0 += '\t'
+			if len(rs.enzyme_list[i][1].name) < 8:
+				temp_enzyme_display1 += '\t'
 
 			# Add string of 6 objects one at a time to the three arrays
 			if (i + 1) % 6 == 0 or i == len(rs.synthesized_query) - 1:
@@ -471,7 +478,7 @@ if __name__ == '__main__':
 
 		with open(enzymes_file_location, newline='') as csvfile:
 			reader = csv.DictReader(csvfile)
-			enzymes = [enzyme(row['name'], translate_site(row['site'], int(row['cut0']), int(row['cut1'])), row['cut0'], row['cut1']) for row in reader]
+			enzymes = [csv_enzyme(row['name'], translate_site(row['site'], int(row['cut0']), int(row['cut1'])), row['cut0'], row['cut1']) for row in reader]
 		# Start the synthesis 
 		print('Starting synthesis')
 
@@ -482,16 +489,13 @@ if __name__ == '__main__':
 		rs.perform_synthesis()
 
 	elif True or data_ans.lower() == 'database':
-		from Bio.Restriction import *
-		from Bio.Seq import Seq
-		from Bio.Alphabet.IUPAC import IUPACAmbiguousDNA
 		amb = IUPACAmbiguousDNA()
 		RestrictionBatch.show_codes()
 
 		comp_ans = str(input('Please select which company/companies that will be used for synthesis. i.e. B,C: '))
 		companies = comp_ans.split(',')
 
-		enzymes = [enzyme(bp = True, bp_enzyme = e) for e in RestrictionBatch(first=[],suppliers=companies)]
+		enzymes = [biopy_enzyme(e) for e in RestrictionBatch(first=[], vsuppliers=companies)]
 
 		# Start the synthesis 
 		print('Starting synthesis')

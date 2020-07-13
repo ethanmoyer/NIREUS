@@ -32,4 +32,4 @@ At this point, NIREUS DNA Synthesis is able to simulate this proposed DNA synthe
 - Create a method for determining the order of applying enzymes for the digestion of the reference
 - Implement a pre-built machine learning model for subsequence classification
 - Build and implement a machine learning model for subsequence alignment prediction
-- Implement Biopython implementation
+
