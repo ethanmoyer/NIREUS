@@ -4,6 +4,7 @@ import csv
 from enzyme import enzyme, csv_enzyme, biopy_enzyme
 from entry import entry
 from digested_sequence import digested_sequence
+from restriction_map import restriction_map
 
 import pandas as pd
 import re
@@ -55,6 +56,7 @@ class restriction_synthesis():
 		# Array to keep track of synthesis
 		rs.synthesized_query = []
 		rs.enzyme_list = []
+		rs.positions = []
 
 		# This alphabet is used to translate between sticky on bottom strand and sticky end on top strand.
 		rs.ligation_alphabet = {'A': 'Q', 'T': 'W', 'C': 'E', 'G': 'R'}
@@ -223,9 +225,6 @@ class restriction_synthesis():
 					enzyme0 = rs.most_compatible_enzyme(enzymes0)
 					enzyme1 = rs.most_compatible_enzyme(enzymes1)
 
-					print(enzyme0.name)
-					print(enzyme1.name)
-
 					# If the previous sticky end and the current sticky end are not compatible, continue to the next p0.
 					if last_enzyme1 is not None and not rs.is_ligation_match_biopython(last_enzyme1, enzyme0):
 						ignore_enzymes.append(enzyme0.name)
@@ -240,8 +239,8 @@ class restriction_synthesis():
 
 					# Used to track the synthesis step by step in the display_synthesis function. 
 					rs.enzyme_list.append([enzyme0, enzyme1])
-
 					rs.synthesized_query.append(query_subseq)
+					rs.positions.append([p0, p0 + len(query_subseq)])
 
 					# Store length of rs.synthesized_query
 					synthesized_query_len = len(''.join(rs.synthesized_query))
@@ -272,6 +271,7 @@ class restriction_synthesis():
 			# Used to track the synthesis step by step in the display_synthesis function. 
 			rs.synthesized_query.append('X')
 			rs.enzyme_list.append([enzyme(), enzyme()])
+			rs.positions.append([None, None])
 
 			# Store length of rs.synthesized_query
 			synthesized_query_len = len(''.join(rs.synthesized_query))
@@ -345,6 +345,7 @@ class restriction_synthesis():
 					# Used to track the synthesis step by step in the display_synthesis function. 
 					rs.synthesized_query.append(query_subseq)
 					rs.enzyme_list.append([enzyme0, enzyme1])
+					rs.positions.append([p0, p0 + len(query_subseq)])
 
 					# Store length of rs.synthesized_query
 					synthesized_query_len = len(''.join(rs.synthesized_query))
@@ -375,6 +376,7 @@ class restriction_synthesis():
 			# Used to track the synthesis step by step in the display_synthesis function. 
 			rs.synthesized_query.append('X')
 			rs.enzyme_list.append([enzyme(), enzyme()])
+			rs.positions.append([None, None])
 
 			# Store length of rs.synthesized_query
 			synthesized_query_len = len(''.join(rs.synthesized_query))
@@ -433,7 +435,14 @@ class restriction_synthesis():
 
 		accuracy = (1 - rs.synthesized_query.count('X') / len(rs.query)) * 100
 		print('Synthesis accuracy: ', str(round(accuracy, 2)))
-			
+
+		rm = restriction_map(len(reference))
+
+		for i in range(len(rs.enzyme_list)):
+			if rs.positions[i][0] is not None or rs.positions[i][1] is not None:
+				rm.add_enzyme(rs.enzyme_list[i][0].name + ' ' + rs.enzyme_list[i][1].name, rs.positions[i][0])
+
+		rm.show_map()
 
 if __name__ == '__main__':
 
@@ -450,7 +459,7 @@ if __name__ == '__main__':
 	reference = open(reference_file_location).read()
 	reference = re.sub('\n', '', reference)
 	print('Reference length: ', len(reference), sep = '')
-
+	print()
 	# Load the query sequence
 	print('Loading query sequence')
 	query_file_location = 'data/queries/query0.txt'
@@ -465,7 +474,7 @@ if __name__ == '__main__':
 	print('Query length: ', len(query), sep = '')
 
 	print(f'\nReference length to query length ratio:',str(round(len(reference) / len(query), 2)))
-
+	print()
 	# Load the enzymes
 	print('Loading enzyme list')
 	#data_ans = str(input('Would you like to use an enzyme file or a database from BioPython? [file/database]: '))
@@ -495,7 +504,7 @@ if __name__ == '__main__':
 		comp_ans = str(input('Please select which company/companies that will be used for synthesis. i.e. B,C: '))
 		companies = comp_ans.split(',')
 
-		enzymes = [biopy_enzyme(e) for e in RestrictionBatch(first=[], vsuppliers=companies)]
+		enzymes = [biopy_enzyme(e) for e in RestrictionBatch(first=[], suppliers=companies)]
 
 		# Start the synthesis 
 		print('Starting synthesis')
