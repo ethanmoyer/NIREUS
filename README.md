@@ -22,7 +22,29 @@ An instance match, unlike a subsequence match, is based on whether two enzymes e
 
 In addition to a subsequence match and an instance match, a third match is required: a ligation match. Some restriction enzymes cut DNA in a Z-like manner, where the product of the enzymatic digest contains nucleotide overhangs, commonly referred to as sticky-ends. Because many of the enzymes create these sticky-ends on digested fragments, a ligation match is needed to ensure that sequential fragments are compatible. For instance, a subsequence that ends in an overhang of AGTA on the top strand 5’ end needs to be followed with an overhang that begins with TCAT on the bottom 3’ end. Also, fragments cut with enzymes that produce blunt ends, or ends without any overhangs, need to be followed with fragments that have these produced blunt ends as well. This final end-to-end compatibility indicates whether a fragment is a complete match and whether the search process continues. 
 
-## Next Steps
+## Usage
+
+#### Required virtual environment
+
+Run this command to load the virtual environment
+```bash
+$ source venv/bin/activate
+```
+
+### Data structure
+
+There are three important files in the data/ directory: the reference, the query, and the enzyme list. In each of these files, the user may add, remove, or change the contents depending on their simulation. The format is simple for ease of access.
+
+### Running synthesis
+
+Run this command to begin NIREUS DNA Synthesis
+```bash
+$ python synthesis.py
+```
+
+On startup, the user has the option to either use the built-in directories for the reference, query, and enzyme list or use some other files they construct themselves. Also, the user has a choice to use a database from BioPython instead of the enzyme text file. Moreover, they can choose from which companies enzymes should be used in the synthesis.
+
+## Possible Next Steps
 
 At this point, NIREUS DNA Synthesis is able to simulate this proposed DNA synthesis method. The following list outlines the next steps for NIREUS DNA Synthesis.
 
