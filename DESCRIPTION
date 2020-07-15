@@ -1,7 +1,1 @@
-Package: NIREUS DNA Synthesis
-Type: Package
-Title: Novel Iterative Restriction Enzyme digest Utilizing Sticky-end alignment (NIREUS) DNA Synthesis
-Version: 1.0.0
-Authors@R: c(person("Moyer", "Ethan", role = c("aut","cre"),
-             email = "ethan.jacob.moyer@drexel.edu"))
-License: MIT
+MIT
