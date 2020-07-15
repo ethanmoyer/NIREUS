@@ -451,8 +451,8 @@ if __name__ == '__main__':
 	# Load the reference sequence
 	print('Loading reference sequence')
 	reference_file_location = 'data/references/reference0.txt'
-	#print(f'Default reference file location: {reference_file_location}')
-	#ref_ans = str(input('Would you like to use the default reference file? [yes/no]:'))
+	print(f'Default reference file location: {reference_file_location}')
+	ref_ans = str(input('Would you like to use the default reference file? [yes/no]: '))
 	if False and ref_ans.lower() == 'no':
 		reference_file_location = str(input('Please indicate which reference file you would like to use: '))
 
@@ -463,21 +463,21 @@ if __name__ == '__main__':
 	# Load the query sequence
 	print('Loading query sequence')
 	query_file_location = 'data/queries/query0.txt'
-	#print(f'Default query file location: {query_file_location}')
-	#query_ans = str(input('Would you like to use the default query file? [yes/no]:'))
+	print(f'Default query file location: {query_file_location}')
+	query_ans = str(input('Would you like to use the default query file? [yes/no]: '))
 	if False and query_ans.lower() == 'no' :
 		query_file_location = str(input('Please indicate which query file you would like to use: '))
 
 	query = open(query_file_location).read()
 	query = re.sub('\n', '', query)
-	query = query[:50]
+	query = query
 	print('Query length: ', len(query), sep = '')
 
 	print(f'\nReference length to query length ratio:',str(round(len(reference) / len(query), 2)))
 	print()
 	# Load the enzymes
 	print('Loading enzyme list')
-	#data_ans = str(input('Would you like to use an enzyme file or a database from BioPython? [file/database]: '))
+	data_ans = str(input('Would you like to use an enzyme file or a database from BioPython? [file/database]: '))
 	if False and data_ans.lower() == 'file':	
 		enzymes_file_location = 'data/enzymes/enzymes0.csv'
 		print(f'Default enzyme file location: {enzymes_file_location}')
@@ -500,11 +500,13 @@ if __name__ == '__main__':
 	elif True or data_ans.lower() == 'database':
 		amb = IUPACAmbiguousDNA()
 		RestrictionBatch.show_codes()
-
+		print('ALL = All of them')
 		comp_ans = str(input('Please select which company/companies that will be used for synthesis. i.e. B,C: '))
-		companies = comp_ans.split(',')
-
-		enzymes = [biopy_enzyme(e) for e in RestrictionBatch(first=[], suppliers=companies)]
+		if comp_ans is 'N':
+			enzymes = CommOnly
+		else:
+			companies = comp_ans.split(',')
+			enzymes = [biopy_enzyme(e) for e in RestrictionBatch(first=[], suppliers=companies)]
 
 		# Start the synthesis 
 		print('Starting synthesis')
